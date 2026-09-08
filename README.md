@@ -1,4 +1,4 @@
-# Interactive Transcript Kit
+# Broken Chat
 
 Make a "Broken Chat"-style teaching exercise: a **real** AI chat session that students read with checkpoint questions embedded in it. One self-contained web page. No server, no account, nothing recorded.
 
