@@ -4,14 +4,14 @@ Make a "Broken Chat"-style teaching exercise: a **real** AI chat session that st
 
 Students download the file, double-click it, and read a numbered transcript. A few turns carry a small dot. Each dot has a multiple-choice checkpoint beside it. Students commit to an answer, then see the instructor's reading of that moment and why each other option is wrong. Their first pick is remembered in their own browser and nowhere else.
 
-Built at The Ohio State University's Moritz College of Law for *Information Law and AI* (Autumn 2026), and packaged so that anyone with a text editor and an AI assistant such as Gemini or Microsoft Copilot can make their own.
+Built for a graduate course on law and AI in 2026, and packaged so that anyone with a text editor and an AI assistant such as Gemini or Microsoft Copilot can make their own.
 
 ## What is in this repository
 
 | File | What it is |
 |---|---|
 | `interactive-transcript.html` | The shell. Opens in any browser as a short sample exercise. You replace one block of text inside it and never touch the rest. |
-| `example - Ask It Again (Week 3).json` | A complete, real exercise's content in the exact format the shell expects. Give this to your AI assistant as the model to imitate. |
+| `example - Ask It Again.json` | A complete, real exercise's content in the exact format the shell expects. Give this to your AI assistant as the model to imitate. |
 | `AI assistant instructions.txt` | Paste into a Gemini Gem or a Copilot agent (or as the first message of a chat). It interviews you, then produces the content block. |
 | `README.md` | This guide. |
 
@@ -79,6 +79,6 @@ Inside every string, write `</` as `<\/`. That is the one rule the browser will 
 
 ## Attribution
 
-Shell, design rules, and the Week 3 example: Rebecca Fordon, Moritz College of Law, The Ohio State University, 2026, developed with Claude. The interaction design (commit-then-explore checkpoints, the novice rule, marking under half the failures) came out of instructor playtesting for the "Broken Chat" exercise in *Information Law and AI*.
+Shell, design rules, and the example: Rebecca Fordon, 2026, developed with Claude. The interaction design (commit-then-explore checkpoints, the novice rule, marking under half the failures) came out of instructor playtesting for the original "Broken Chat" exercise.
 
 License: not yet chosen.
