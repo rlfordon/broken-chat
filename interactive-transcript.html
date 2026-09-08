@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interactive transcript exercise</title>
+<!--
+  INTERACTIVE TRANSCRIPT — portable shell (v1 · 2026-09-08)
+  ============================================================
+  A single self-contained HTML file: a real AI chat transcript
+  with marked turns and commit-then-reveal multiple-choice
+  checkpoints. No server, no external requests, records nothing.
+  Students download it and double-click.
+
+  HOW TO USE: edit ONLY the CONTENT BLOCK just below <body>.
+  Everything else (styles, interaction) is the settled shell
+  from Ohio State's "Broken Chat" (Week 2) and "Ask It Again"
+  (Week 3) exercises, Information Law and AI, Autumn 2026.
+  See README.md and "AI assistant instructions.txt"
+  in the same folder.
+  ============================================================ -->
+<style>
+:root{
+  --paper:#faf9f7; --ink:#1f2328; --muted:#5c6570; --line:#e3e1dc;
+  --user-border:#8da2b8; --user-tint:#f0f2f5; --asst-border:#d6d2c9;
+  --marker:#64748b; --note-tint:#f3f1ec;
+  --check-tint:#eef1f6; --answer-rule:#8494a8;
+  --live:#2f6f4f; --live-tint:#eef5f0; --live-frame:#b9cfc2;
+  --doc-tint:#f6f4ef; --doc-border:#e0dcd2; --chip-tint:#eef0f3;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#16181c; --ink:#e7e5e0; --muted:#a0a8b2; --line:#2c3038;
+    --user-border:#5f7590; --user-tint:#1c2026; --asst-border:#3a3e45;
+    --marker:#94a3b8; --note-tint:#1d2025;
+    --check-tint:#1b2027; --answer-rule:#46536b;
+    --live:#6fbf94; --live-tint:#1a231e; --live-frame:#33473c;
+    --doc-tint:#1b1e23; --doc-border:#33373e; --chip-tint:#232730;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:1.0625rem;line-height:1.65}
+.wrap{max-width:720px;margin:0 auto;padding:2.5rem 1.25rem 4rem}
+@media (min-width:1080px){
+  .wrap{max-width:1160px}
+  header,#handoff{max-width:720px}
+}
+#transcript .row{display:grid;grid-template-columns:minmax(0,1fr);column-gap:1.4rem;align-items:start}
+@media (min-width:1080px){
+  #transcript .row{grid-template-columns:minmax(0,630px) 460px}
+}
+#transcript .rowmain{min-width:0}
+h1{font-family:var(--serif);font-size:2rem;line-height:1.2;font-weight:600;margin:0 0 1.1rem}
+h2{font-family:var(--serif);font-weight:600;font-size:1.3rem}
+p{margin:0 0 .9em}
+.scenario{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:1.1rem 0;margin:0 0 1.4rem}
+.kicker{font-size:.8125rem;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.standing-note{background:var(--note-tint);border:1px solid var(--line);border-radius:6px;padding:1rem 1.15rem;font-size:.9375rem;margin:0 0 1rem}
+.standing-note ul{margin:.3rem 0 .7rem;padding-left:1.25rem}
+.standing-note li{margin-bottom:.45rem}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--marker);vertical-align:-1px;margin:0 4px}
+
+/* how-this-works */
+.howworks{display:flex;gap:1rem;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;padding:.9rem 1.1rem;margin:0 0 1.4rem;background:var(--paper)}
+.howworks .step{flex:1;min-width:12rem;font-size:.92rem}
+.howworks .n{font-family:var(--serif);font-size:1.4rem;font-weight:700;color:var(--marker);display:block}
+
+/* embedded quick-reference drawer */
+details.guide{background:var(--note-tint);border:1px solid var(--line);border-radius:6px;padding:.6rem 1rem;font-size:.9rem;margin:0 0 1.6rem}
+details.guide summary{cursor:pointer;font-weight:650}
+details.guide h4{margin:.8rem 0 .3rem;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+details.guide ul{margin:0 0 .5rem;padding-left:1.2rem}
+details.guide li{margin-bottom:.3rem}
+
+/* transcript = document */
+article.turn{margin:0 0 1.15rem;position:relative;padding-left:1.1rem}
+article.turn .who{font-size:.75rem;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:.15rem}
+article.turn.user{border-left:3px solid var(--user-border);background:var(--user-tint);border-radius:6px;padding:.65rem .85rem .65rem 1.1rem}
+article.turn.assistant{border-left:3px solid var(--asst-border);padding:.2rem 0 .2rem 1.1rem}
+article.turn ul{margin:0 0 .9em;padding-left:1.3rem}
+article.turn li{margin-bottom:.45em}
+.doc{font-family:var(--serif);background:var(--doc-tint);border:1px solid var(--doc-border);border-radius:4px;padding:1rem 1.2rem;margin:.9rem 0;font-size:1rem}
+.doc .doc-head{font-family:var(--sans);font-size:.8125rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0 0 .7rem}
+.doc h3{font-family:var(--serif);font-size:1.0625rem;font-weight:700;margin:1rem 0 .35rem}
+.doc h3:first-of-type{margin-top:.2rem}
+.elision{font-style:italic;color:var(--muted);font-size:.9375rem;text-align:center;background:var(--doc-tint);border-top:1px dashed var(--doc-border);border-bottom:1px dashed var(--doc-border);padding:.45rem .8rem;margin:.9em 0}
+.attachments{display:flex;flex-wrap:wrap;gap:.4rem;margin:.8rem 0 .4rem}
+.chip{display:inline-flex;align-items:center;gap:.4rem;background:var(--chip-tint);border:1px solid var(--line);border-radius:5px;padding:.25rem .6rem;font-size:.8125rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;max-width:100%;min-width:0}
+.chip .fname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .ftype{font-family:var(--sans);font-size:.625rem;font-weight:700;letter-spacing:.05em;color:var(--muted);border:1px solid var(--muted);border-radius:3px;padding:0 .25rem}
+.sources{margin-top:1rem;display:flex;flex-wrap:wrap;align-items:center;gap:.4rem}
+.sources .label{font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:.15rem}
+.srcpill{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--line);border-radius:999px;padding:.2rem .75rem;font-size:.8125rem;color:var(--muted);background:var(--chip-tint);white-space:nowrap}
+.srcpill svg{width:12px;height:12px;flex:none}
+a.srcpill{text-decoration:none;cursor:pointer}
+a.srcpill:hover{border-color:var(--marker);color:var(--ink)}
+.system-note{font-size:.875rem;font-style:italic;color:var(--muted);text-align:center;margin:1rem auto 1.6rem;max-width:34em}
+.tablewrap{overflow-x:auto;margin:.9rem 0}
+article.turn table{border-collapse:collapse;width:100%;font-size:.9375rem}
+article.turn th,article.turn td{text-align:left;vertical-align:top;border:1px solid var(--line);padding:.5rem .65rem;line-height:1.45}
+article.turn th{font-size:.8125rem;font-weight:700;letter-spacing:.03em;background:var(--doc-tint)}
+
+/* checkpoint (margin rail on wide screens) */
+.checkpoint{background:var(--check-tint);border:1px solid var(--line);border-left:4px solid var(--marker);border-radius:8px;padding:1.05rem 1.25rem;margin:.35rem 0 1.4rem;font-size:1rem}
+@media (min-width:1080px){
+  .checkpoint{margin:0 0 1.4rem}
+}
+.checkpoint h3{margin:0 0 .5rem;font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--marker)}
+.locator{font-size:.85rem;color:var(--muted);margin:0 0 .6rem;font-style:italic}
+.checkpoint fieldset{border:0;padding:0;margin:0 0 .5rem}
+.checkpoint legend{font-weight:650;margin-bottom:.6rem;padding:0}
+.checkpoint .opt{display:block;margin:0 0 .65rem;padding:.15rem 0;cursor:pointer;line-height:1.55}
+.checkpoint .opt input{margin-right:.5rem}
+.checkpoint button[type=submit]{font:inherit;padding:.4rem .9rem;border:1px solid var(--line);border-radius:6px;background:var(--paper);cursor:pointer;margin-top:.25rem;color:var(--ink)}
+.checkpoint .pickerr{color:var(--muted);font-size:.9rem;margin:.4rem 0 0}
+.checkpoint .explorehint{font-size:.88rem;color:var(--muted);font-style:italic;margin:.4rem 0 0}
+.answer.wide{grid-column:1/-1;background:var(--check-tint);border:1px solid var(--line);border-left:4px solid var(--marker);border-radius:8px;padding:1rem 1.15rem;margin:.2rem 0 1.6rem}
+.anshead{font-size:.75rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--marker);margin:0 0 .5rem}
+.answer .verdict{font-weight:650}
+.answer .agree .tick{color:var(--live);font-weight:800;margin-right:.25rem}
+.answer p{margin:0 0 .6em}
+.answer details{margin:.6rem 0 0;font-size:.95rem}
+.answer summary{cursor:pointer;color:var(--muted)}
+.answer .nudge{margin-top:.7rem;font-style:italic}
+.yourpick{font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-left:.4rem}
+
+/* rescue station + wrap-up */
+#station{border-top:1px solid var(--line);margin-top:2.5rem;padding-top:1.4rem}
+#handoff{border-top:1px solid var(--line);margin-top:2.5rem;padding-top:1.4rem}
+:focus-visible{outline:2px solid var(--marker);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media print{
+  #transcript .row{grid-template-columns:1fr}
+  .checkpoint{position:static}
+  .checkpoint button[type=submit]{display:none !important}
+  article.turn,.checkpoint{page-break-inside:avoid}
+}
+/* ---- kit additions (author-facing notices; hidden unless something is wrong) ---- */
+.kit-error{background:#fff4f2;border:2px solid #c0392b;border-radius:8px;padding:1rem 1.2rem;margin:0 0 1.5rem;font-size:.95rem}
+.kit-error h2{margin:0 0 .5rem;font-size:1.1rem;color:#c0392b}
+.kit-error pre{white-space:pre-wrap;word-break:break-word;background:var(--doc-tint);border:1px solid var(--doc-border);padding:.6rem .8rem;border-radius:4px;font-size:.85rem}
+.kit-warn{background:#fff9e6;border:1px solid #d4a017;border-radius:8px;padding:.8rem 1.1rem;margin:0 0 1.5rem;font-size:.9rem}
+.kit-warn ul{margin:.3rem 0 0;padding-left:1.2rem}
+@media (prefers-color-scheme: dark){
+  .kit-error{background:#2a1a18} .kit-warn{background:#2a2410}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     CONTENT BLOCK — this is the ONLY part of the file you edit.
+     Everything between the two lines below is one JSON object.
+     Replace it with the JSON your AI assistant produced (or that
+     you wrote), and leave every other line of this file alone.
+     Rule: inside the JSON, every "</" must be written as "<\/".
+     Open the file in a browser to check it — if the JSON has a
+     mistake, the page tells you where.
+     ============================================================ -->
+<script type="application/json" id="exercise">
+{
+  "title": "Sample exercise",
+  "subtitle": "A three-turn sample so you can see the shell working. Replace everything in the content block.",
+  "welcome": "<p><strong>Welcome.<\/strong> This is placeholder text. In a real exercise it tells students what they will read, why it matters, and what their job is while reading.<\/p>",
+  "steps": [
+    "<strong>Read and answer.<\/strong> Read the conversation from the top. At marked moments you will find a short multiple-choice question beside the conversation; we call these <em>checkpoints<\/em>. Answer each one when you reach it.",
+    "<strong>Answer before you scroll on.<\/strong> The conversation reveals some of its own secrets as it goes, so commit to each answer before you read further.",
+    "<strong>Then do the written work.<\/strong> Nothing on this page is collected. Written work goes wherever your course collects it."
+  ],
+  "practicalNotes": "<p>The checkpoints are practice, not a test: they are not graded, they are not turned in, and nothing you do on this page is recorded or sent anywhere. Your answers are saved only in your own browser, so you can close this page and come back later without losing your place. Plan on about ten minutes.<\/p>",
+  "scenarioKicker": "The situation",
+  "scenario": "<p>A working professional asked an AI assistant for help with a short task. The conversation below is what happened. It is real, with light editing; shortened passages are clearly marked, and nothing was added that the tool did not actually produce.<\/p>",
+  "standingNote": "<p><strong>Three things to know before you begin:<\/strong><\/p><ul><li><strong>The dots.<\/strong> Every message is numbered. A few are marked with a small dot <span class=\"dot\" role=\"img\" aria-label=\"example of the marker dot\"><\/span>. Each dot has a checkpoint question beside it; on a narrow screen, the question appears just below the marked message. The dots do not mark every problem, and a dot does not always mean something went wrong.<\/li><li><strong>Answer from what you can see.<\/strong> Every checkpoint can be answered using only what is on this page.<\/li><li><strong>Answer before you scroll on.<\/strong><\/li><\/ul>",
+  "quickReference": {
+    "summary": "Quick reference (optional drawer): the names your course uses for AI failures",
+    "html": "<p style=\"margin:.5rem 0 0\">Put your course's failure vocabulary here, one row per term, in full sentences. Delete the whole <code>quickReference<\/code> entry if you do not need this drawer.<\/p>"
+  },
+  "closing": {
+    "heading": "When you finish reading",
+    "html": "<p>That is the end of the recorded conversation. Tell students here what to do next, and where the written work goes.<\/p>"
+  },
+  "checkpoints": {
+    "1": {
+      "locator": "Before you answer, look at what the tool was given and what it was asked for.",
+      "stem": "What do you make of this opening ask?",
+      "correct": 1,
+      "options": [
+        {
+          "text": "It never says what kind of document the user needs.",
+          "fb": "Look again. The ask names the deliverable: \"a one-page summary.\""
+        },
+        {
+          "text": "It asks the tool to summarize a report it was never given.",
+          "fb": ""
+        },
+        {
+          "text": "It has no deadline, so the tool cannot know how urgent it is.",
+          "fb": "\"Before my 2pm meeting\" is a deadline. What is missing is the report itself."
+        }
+      ],
+      "answer": "The ask names the deliverable and the deadline and hands over nothing to read. The tool has no report to summarize. Also worth noticing: the user never says who the summary is for.",
+      "nudge": "What would you attach, and what one sentence would you add?"
+    },
+    "3": {
+      "locator": "Before you answer, compare what the user attached in Turn 3 with what the tool said in Turn 2.",
+      "stem": "The user attached the file. What has changed?",
+      "correct": 0,
+      "options": [
+        {
+          "text": "The tool now has something real to work from, so its next answer can be checked against the report.",
+          "fb": ""
+        },
+        {
+          "text": "Nothing. The tool already had the report from Turn 2.",
+          "fb": "Turn 2 says the opposite: \"I don't have the report.\" This is the first real document in the session."
+        },
+        {
+          "text": "The tool refused the file.",
+          "fb": "No line on the page says the file was refused. The attachment chip shows it went through."
+        }
+      ],
+      "answer": "For the first time the tool has the actual document. That is the right move. Whether the next answer is any good is now something the user can check.",
+      "nudge": "How would you check the tool's summary against the report in under five minutes?"
+    }
+  },
+  "items": [
+    {
+      "type": "turn",
+      "turn": 1,
+      "speaker": "user",
+      "marked": true,
+      "html": "<p>Can you write me a one-page summary of the Q3 vendor risk report? I need it before my 2pm meeting.<\/p>"
+    },
+    {
+      "type": "turn",
+      "turn": 2,
+      "speaker": "assistant",
+      "marked": false,
+      "html": "<p>I don't have the report, so I can't summarize its actual contents. If you paste the text or attach the file, I'll write a one-page summary. In the meantime, here is what a typical vendor risk report covers:<\/p><ul><li>Scope and vendors reviewed<\/li><li>Risk ratings and changes since last quarter<\/li><li>Open findings and owners<\/li><\/ul>"
+    },
+    {
+      "type": "system",
+      "text": "1 file attached"
+    },
+    {
+      "type": "turn",
+      "turn": 3,
+      "speaker": "user",
+      "marked": true,
+      "html": "<p>Here you go.<\/p><div class=\"attachments\"><span class=\"chip\"><span class=\"fname\">Q3-vendor-risk-report.pdf<\/span><span class=\"ftype\">PDF<\/span><\/span><\/div>"
+    },
+    {
+      "type": "turn",
+      "turn": 4,
+      "speaker": "assistant",
+      "marked": false,
+      "html": "<p>Thanks. Here is a one-page summary of the attached report.<\/p><div class=\"doc\"><p class=\"doc-head\">Summary<\/p><p><em>[Shortened for this sample. In a real exercise the tool's full reply goes here, word for word.]<\/em><\/p><\/div>"
+    }
+  ]
+}
+</script>
+<!-- ================= END OF CONTENT BLOCK ===================== -->
+
+<div class="wrap">
+<div id="kit-notices"></div>
+<header>
+  <h1 id="title"></h1>
+  <p id="subtitle" style="color:var(--muted);margin-top:-.6rem"></p>
+  <div id="welcome"></div>
+  <div class="howworks" role="list" id="howworks"></div>
+  <div id="practical"></div>
+  <div class="scenario" id="scenario"></div>
+  <aside class="standing-note" id="standing"></aside>
+  <details class="guide" id="guide" hidden><summary id="guide-summary"></summary><div id="guide-body"></div></details>
+</header>
+
+<main id="transcript"><!-- turns + checkpoints render here --></main>
+
+<section id="handoff" aria-labelledby="handoff-h">
+  <h2 id="handoff-h"></h2>
+  <div id="handoff-body"></div>
+</section>
+</div>
+
+<script type="module">
+// ============================================================
+// SHELL — do not edit below this line. All content comes from the
+// JSON block above. Interaction logic is the proven Week 2/3 shell.
+// ============================================================
+
+// ==================== load + validate content ====================
+const notices = document.getElementById("kit-notices");
+const raw = document.getElementById("exercise").textContent;
+let X;
+try {
+  X = JSON.parse(raw);
+} catch (e) {
+  // Firefox/Safari report "position N"; Chrome quotes the surrounding text instead. Handle both.
+  let p = -1;
+  const m = /position (\d+)/.exec(e.message);
+  if (m) p = Number(m[1]);
+  else {
+    const q = /\.\.\."([\s\S]*?)"\.\.\. is not valid JSON/.exec(e.message) || /"([\s\S]{8,})"\.\.\. is not valid JSON/.exec(e.message);
+    if (q) { const i = raw.indexOf(q[1]); if (i >= 0) p = i + Math.floor(q[1].length / 2); }
+  }
+  let where = "";
+  if (p >= 0) {
+    const line = raw.slice(0, p).split("\n").length;
+    where = `<p>The problem is around <strong>line ${line} of the content block</strong> (counting from the first line inside it). The text just before and after that spot:</p><pre>${esc(raw.slice(Math.max(0, p - 160), p))}<mark>▶</mark>${esc(raw.slice(p, p + 120))}</pre>`;
+  }
+  notices.innerHTML = `<div class="kit-error" role="alert"><h2>The content block has a formatting error</h2>
+    <p>The browser could not read the JSON between the CONTENT BLOCK lines. Its message: <code>${esc(e.message)}</code></p>${where}
+    <p>Common causes: a straight double quote (") inside a piece of text that was not written as \\", a missing comma between two entries, an extra comma after the last entry in a list, or a <code>&lt;/</code> that was not written as <code>&lt;\\/</code>. Fix the block, save, and reload this page.</p></div>`;
+  throw e;
+}
+function esc(s){ return String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+const CHECKPOINTS = X.checkpoints || {};
+const display = { items: X.items || [] };
+
+// author-facing sanity checks (never shown to students if the content is right)
+const warnings = [];
+for (const k of ["title","welcome","steps","scenario","standingNote","closing","checkpoints","items"]) {
+  if (X[k] === undefined) warnings.push(`Missing field: "${k}".`);
+}
+const markedTurns = new Set(display.items.filter(i => i.type === "turn" && i.marked).map(i => String(i.turn)));
+for (const t of markedTurns) if (!CHECKPOINTS[t]) warnings.push(`Turn ${t} is marked but has no checkpoint.`);
+for (const [t, cp] of Object.entries(CHECKPOINTS)) {
+  if (!markedTurns.has(t)) warnings.push(`Checkpoint "${t}" exists but Turn ${t} is not marked (set "marked": true on that turn).`);
+  if (!Array.isArray(cp.options) || cp.options.length < 3 || cp.options.length > 4) warnings.push(`Checkpoint ${t}: should have 3 or 4 options.`);
+  else if (typeof cp.correct !== "number" || !cp.options[cp.correct]) warnings.push(`Checkpoint ${t}: "correct" must be 0–${cp.options.length - 1}.`);
+  else cp.options.forEach((o, i) => { if (i !== cp.correct && !o.fb) warnings.push(`Checkpoint ${t}, option ${i + 1}: a wrong option needs "fb" text saying why it is wrong.`); });
+  for (const k of ["stem","answer","nudge"]) if (!cp[k]) warnings.push(`Checkpoint ${t}: missing "${k}".`);
+}
+const seen = new Set();
+for (const i of display.items) if (i.type === "turn") { if (seen.has(i.turn)) warnings.push(`Turn number ${i.turn} appears twice.`); seen.add(i.turn); }
+if (warnings.length) {
+  notices.innerHTML = `<div class="kit-warn" role="status"><strong>Author check — fix these in the content block before sharing:</strong><ul>${warnings.map(w => `<li>${esc(w)}</li>`).join("")}</ul></div>`;
+}
+
+// ==================== page prose ====================
+document.title = X.title || "Interactive transcript";
+document.getElementById("title").textContent = X.title || "";
+document.getElementById("subtitle").textContent = X.subtitle || "";
+document.getElementById("welcome").innerHTML = X.welcome || "";
+document.getElementById("howworks").innerHTML = (X.steps || []).map((s, i) => `<div class="step" role="listitem"><span class="n">${i + 1}</span>${s}</div>`).join("");
+document.getElementById("practical").innerHTML = X.practicalNotes || "";
+document.getElementById("scenario").innerHTML = (X.scenarioKicker ? `<p class="kicker">${esc(X.scenarioKicker)}</p>` : "") + (X.scenario || "");
+document.getElementById("standing").innerHTML = X.standingNote || "";
+if (X.quickReference && X.quickReference.html) {
+  document.getElementById("guide").hidden = false;
+  document.getElementById("guide-summary").textContent = X.quickReference.summary || "Quick reference";
+  document.getElementById("guide-body").innerHTML = X.quickReference.html;
+}
+document.getElementById("handoff-h").textContent = (X.closing && X.closing.heading) || "When you finish reading";
+document.getElementById("handoff-body").innerHTML = (X.closing && X.closing.html) || "";
+
+// ==================== persistence (browser-local only) ====================
+const STORE_KEY = "interactive-transcript:" + (X.storageKey || X.title || "untitled");
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch {}
+const state = { answered: new Set(), checkpoints: {} };
+function persist(){
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      picks: Object.fromEntries(Object.entries(state.checkpoints).map(([t,c]) => [t, c.picks])),
+    }));
+  } catch {}
+}
+
+// ==================== transcript render ====================
+const turns = display.items.filter(i => i.type === "turn");
+const main = document.getElementById("transcript");
+const cpSections = {};
+
+function makeRow(){ const r = document.createElement("div"); r.className = "row";
+  const m = document.createElement("div"); m.className = "rowmain"; r.appendChild(m); return [r, m]; }
+
+for (let idx = 0; idx < display.items.length; idx++) {
+  const item = display.items[idx];
+  const [row, rowmain] = makeRow();
+
+  if (item.type === "system") {
+    const n = document.createElement("p");
+    n.className = "system-note";
+    n.textContent = item.text;
+    rowmain.appendChild(n);
+    main.appendChild(row);
+    continue;
+  }
+
+  const t = item;
+  const a = document.createElement("article");
+  a.className = "turn " + t.speaker;
+  const who = document.createElement("div");
+  who.className = "who";
+  who.textContent = `Turn ${t.turn} · ${t.speaker === "user" ? "User" : "Assistant"}`;
+  if (t.marked) {
+    const d = document.createElement("span");
+    d.className = "dot"; d.setAttribute("role","img");
+    d.setAttribute("aria-label","Marked passage — its checkpoint is in the side panel");
+    who.appendChild(d);
+  }
+  const body = document.createElement("div");
+  body.innerHTML = t.html; // original artifact markup incl. the session's real grounding links
+  a.append(who, body);
+  rowmain.appendChild(a);
+
+  if (t.marked && CHECKPOINTS[t.turn]) {
+    const sec = buildCheckpoint(t.turn, CHECKPOINTS[t.turn]);
+    cpSections[t.turn] = sec;
+    row.appendChild(sec);
+    const panel = document.createElement("div");
+    panel.className = "answer wide";
+    panel.id = `cp${t.turn}-answer`;
+    panel.hidden = true;
+    panel.tabIndex = -1;
+    row.appendChild(panel);
+  }
+  main.appendChild(row);
+}
+
+// ==================== checkpoints ====================
+function gentleShow(el){
+  // bring the element minimally into view: no jump past the turn, no motion if reduced-motion
+  const smooth = window.matchMedia("(prefers-reduced-motion: no-preference)").matches;
+  el.scrollIntoView({ block: "nearest", behavior: smooth ? "smooth" : "auto" });
+}
+
+function buildCheckpoint(turn, cp){
+  const sec = document.createElement("section");
+  sec.className = "checkpoint";
+  sec.setAttribute("aria-labelledby", `cp${turn}-h`);
+  sec.innerHTML = `
+    <h3 id="cp${turn}-h">Checkpoint · Turn ${turn}</h3>
+    ${cp.locator ? `<p class="locator">${cp.locator}</p>` : ""}
+    <form>
+      <fieldset>
+        <legend>${cp.stem}</legend>
+        ${cp.options.map((o, i) => `<label class="opt"><input type="radio" name="cp${turn}" value="${i}">${o.text}</label>`).join("")}
+      </fieldset>
+      <button type="submit">Check my answer</button>
+      <p class="pickerr" role="status" tabindex="-1" hidden>Please choose an answer first — a guess is fine.</p>
+    </form>`;
+  const form = sec.querySelector("form");
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const sel = form.querySelector("input:checked");
+    const errEl = sec.querySelector(".pickerr");
+    if (!sel) { errEl.hidden = false; errEl.focus(); return; }
+    errEl.hidden = true;
+    revealCheckpoint(sec, turn, cp, Number(sel.value));
+  });
+  return sec;
+}
+
+function renderCompare(box, cp, idx){
+  const match = idx === cp.correct;
+  box.innerHTML = match
+    ? `<p class="agree"><span class="tick" aria-hidden="true">✓</span> <strong>You chose:</strong> ${cp.options[idx].text}<br><strong>That is our answer too.</strong></p>`
+    : `<p><strong>You chose:</strong> ${cp.options[idx].text}</p>
+       <p><strong>Our answer:</strong> ${cp.options[cp.correct].text}</p>
+       <p><strong>Why we answered differently:</strong> ${cp.options[idx].fb}</p>`;
+}
+
+function revealCheckpoint(sec, turn, cp, firstPick, restored){
+  state.answered.add(turn);
+  state.checkpoints[turn] = { picks: [firstPick] }; // only the first committed answer is remembered
+  sec.classList.add("locked");
+  const firstInput = sec.querySelector(`input[value="${firstPick}"]`);
+  const tag = document.createElement("span");
+  tag.className = "yourpick"; tag.textContent = "your answer";
+  firstInput.closest(".opt").appendChild(tag);
+  const btn = sec.querySelector("button[type=submit]");
+  const hint = document.createElement("p");
+  hint.className = "explorehint";
+  hint.textContent = "Curious about the other options? Select any of them to see our response.";
+  btn.replaceWith(hint);
+  const ans = document.getElementById(`cp${turn}-answer`);
+  ans.innerHTML = `
+    <p class="anshead">Checkpoint feedback · Turn ${turn}</p>
+    <div class="compare"></div>
+    <p><strong>What is happening in this turn:</strong> ${cp.answer}</p>
+    <p class="nudge"><strong>Something to think about:</strong> ${cp.nudge}</p>`;
+  const box = ans.querySelector(".compare");
+  renderCompare(box, cp, firstPick);
+  for (const input of sec.querySelectorAll('input[type=radio]')) {
+    input.addEventListener("change", () => {
+      renderCompare(box, cp, Number(input.value));
+      gentleShow(ans);
+    });
+  }
+  ans.hidden = false;
+  if (!restored) {
+    ans.focus({ preventScroll: true });
+    gentleShow(ans);
+  }
+  persist();
+}
+
+// restore checkpoint answers from this browser's earlier work
+if (saved.picks) {
+  for (const [turnStr, picks] of Object.entries(saved.picks)) {
+    const turn = Number(turnStr);
+    const sec = cpSections[turn];
+    const cp = CHECKPOINTS[turn];
+    const idx = Array.isArray(picks) ? picks[0] : picks;
+    if (sec && cp && typeof idx === "number" && cp.options[idx]) {
+      const input = sec.querySelector(`input[value="${idx}"]`);
+      if (input) { input.checked = true; revealCheckpoint(sec, turn, cp, idx, true); }
+    }
+  }
+}
+
+</script>
+</body>
+</html>
