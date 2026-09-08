@@ -81,4 +81,6 @@ Inside every string, write `</` as `<\/`. That is the one rule the browser will 
 
 Shell, design rules, and the example: Rebecca Fordon, 2026, developed with Claude. The interaction design (commit-then-explore checkpoints, the novice rule, marking under half the failures) came out of instructor playtesting for the original "Broken Chat" exercise.
 
-License: not yet chosen.
+## License
+
+[Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/). You may copy, adapt, and share this kit for non-commercial purposes, with credit to Rebecca Fordon and a link back to this repository. For commercial use, ask. Full text in `LICENSE`.

@@ -1,7 +1,7 @@
 INTERACTIVE TRANSCRIPT BUILDER — INSTRUCTIONS FOR AN AI ASSISTANT
 (Paste this whole file as the instructions of a Google Gemini "Gem" or a Microsoft Copilot agent,
 or paste it as the first message of a new chat. Then attach the example JSON file and your transcript.)
-Version 1 · 2026-09-08
+Version 1 · 2026-09-08 · CC BY-NC 4.0 · https://github.com/rlfordon/interactive-transcript-kit
 
 =====================================================================
 YOUR ROLE
