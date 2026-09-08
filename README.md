@@ -83,4 +83,9 @@ Shell, design rules, and the example: Rebecca Fordon, 2026, developed with Claud
 
 ## License
 
-[Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/). You may copy, adapt, and share this kit for non-commercial purposes, with credit to Rebecca Fordon and a link back to this repository. For commercial use, ask. Full text in `LICENSE`.
+Two licenses, by file type:
+
+- **The shell (`interactive-transcript.html`) is software, released under the [MIT License](LICENSE-MIT).** Use it in anything, commercial or not, with the copyright notice kept.
+- **Everything else (the example exercise, the assistant instructions, this guide) is teaching content, released under [Creative Commons Attribution-NonCommercial 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** ([full text](LICENSE-CC-BY-NC)). Copy, adapt, and share it for non-commercial purposes with credit to Rebecca Fordon and a link back to this repository. For commercial use, ask.
+
+Exercises you build with the shell are yours; the shell's MIT notice travels with the file, and that is all.
